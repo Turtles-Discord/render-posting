@@ -6,7 +6,7 @@
 	"scripts": {
 		"dev": "set NODE_ENV=development&& nodemon backend/index.js",
 		"start": "node backend/index.js",
-		"build": "cd frontend && npm install && npm run build",
+		"build": "npm install && cd frontend && npm install && npm run build",
 		"install-all": "npm install && cd frontend && npm install"
 	},
 	"keywords": [],
@@ -22,7 +22,9 @@
 		"express": "^4.19.2",
 		"jsonwebtoken": "^9.0.2",
 		"mailtrap": "^3.4.0",
-		"mongoose": "^8.5.2"
+		"mongoose": "^8.5.2",
+		"@vitejs/plugin-react": "^4.2.0",
+		"vite": "^5.3.4"
 	},
 	"devDependencies": {
 		"nodemon": "^3.1.4"
