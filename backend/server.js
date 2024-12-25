@@ -26,4 +26,8 @@ app.get('/api/auth/tiktok/callback', async (req, res) => {
   } catch (error) {
     res.status(500).json({ success: false, error: 'Authentication failed' });
   }
+});
+
+app.get('/ping', (req, res) => {
+  res.status(200).send('OK');
 }); 
