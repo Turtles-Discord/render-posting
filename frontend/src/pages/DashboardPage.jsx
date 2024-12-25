@@ -4,6 +4,7 @@ import Navigation from '../components/Navigation/Navigation';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import axios from 'axios';
+import PlatformSection from '../components/PlatformSection';
 
 const DashboardPage = () => {
 	const { user } = useAuthStore();
@@ -55,32 +56,20 @@ const DashboardPage = () => {
 		<div className="min-h-screen bg-gray-900">
 			<Navigation />
 			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-				<motion.div
-					initial={{ opacity: 0, y: 20 }}
-					animate={{ opacity: 1, y: 0 }}
-					className="grid grid-cols-1 lg:grid-cols-3 gap-8"
-				>
-					{/* Platform Sections */}
-					<div className="lg:col-span-2 space-y-8">
-						{/* TikTok Accounts */}
-						<div className="bg-gray-800 rounded-lg p-6">
-							<h2 className="text-2xl font-bold text-green-400 mb-4">TikTok Accounts</h2>
-							{/* Add TikTok accounts list */}
-						</div>
-
-						{/* Instagram Accounts */}
-						<div className="bg-gray-800 rounded-lg p-6">
-							<h2 className="text-2xl font-bold text-green-400 mb-4">Instagram Accounts</h2>
-							{/* Add Instagram accounts list */}
-						</div>
-					</div>
-
-					{/* Upload Section */}
-					<div className="bg-gray-800 rounded-lg p-6">
-						<h2 className="text-2xl font-bold text-green-400 mb-4">Upload Video</h2>
-						{/* Add video upload form */}
-					</div>
-				</motion.div>
+				<div className="space-y-8">
+					<PlatformSection 
+						platform="tiktok"
+						accounts={accounts.tiktok}
+						onAccountsUpdate={fetchAccounts}
+					/>
+					<PlatformSection 
+						platform="instagram"
+						accounts={accounts.instagram}
+						onAccountsUpdate={fetchAccounts}
+					/>
+					
+					{/* Video upload section remains the same */}
+				</div>
 			</div>
 		</div>
 	);
