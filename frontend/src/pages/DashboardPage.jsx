@@ -1,16 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '../store/authStore';
 import Navigation from '../components/Navigation/Navigation';
+import PlatformSection from '../components/PlatformSection';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import axios from 'axios';
-import PlatformSection from '../components/PlatformSection';
 
 const DashboardPage = () => {
 	const { user } = useAuthStore();
 	const [accounts, setAccounts] = useState({
-		tiktok: [],
-		instagram: []
+			tiktok: [],
+			instagram: []
 	});
 	const [videoFile, setVideoFile] = useState(null);
 	const [description, setDescription] = useState('');
@@ -22,10 +22,16 @@ const DashboardPage = () => {
 
 	const fetchAccounts = async () => {
 		try {
-			const response = await axios.get('/api/auth/accounts');
-			setAccounts(response.data.accounts);
+			setAccounts({
+				tiktok: [],
+				instagram: []
+			});
 		} catch (error) {
 			toast.error('Failed to fetch accounts');
+			setAccounts({
+				tiktok: [],
+				instagram: []
+			});
 		}
 	};
 
@@ -59,16 +65,19 @@ const DashboardPage = () => {
 				<div className="space-y-8">
 					<PlatformSection 
 						platform="tiktok"
-						accounts={accounts.tiktok}
+						accounts={accounts.tiktok || []}
 						onAccountsUpdate={fetchAccounts}
 					/>
 					<PlatformSection 
 						platform="instagram"
-						accounts={accounts.instagram}
+						accounts={accounts.instagram || []}
 						onAccountsUpdate={fetchAccounts}
 					/>
 					
-					{/* Video upload section remains the same */}
+					<div className="bg-gray-800 rounded-lg p-6">
+						<h2 className="text-2xl font-bold text-green-400 mb-4">Upload Video</h2>
+						{/* Add video upload form here */}
+					</div>
 				</div>
 			</div>
 		</div>
