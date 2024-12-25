@@ -64,6 +64,14 @@ function App() {
 				<Route path="/reset-password/:token" element={<ResetPasswordPage />} />
 				<Route path="/terms" element={<TermsPage />} />
 				<Route path="/privacy" element={<PrivacyPage />} />
+				<Route 
+					path="/terms/tiktokkvkWqvHcwGX5sTpj4OKn40YIY8VFQV83.txt" 
+					element={
+						<pre style={{ whiteSpace: 'pre-wrap' }}>
+							tiktok-developers-site-verification=kvkWqvHcwGX5sTpj4OKn40YIY8VFQV83
+						</pre>
+					} 
+				/>
 				<Route path="/" element={<Navigate to="/dashboard" replace />} />
 			</Routes>
 			<Toaster position="top-center" reverseOrder={false} />
