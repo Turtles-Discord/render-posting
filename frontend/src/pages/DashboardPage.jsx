@@ -5,6 +5,7 @@ import PlatformSection from '../components/PlatformSection';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import axios from 'axios';
+import VideoUploader from '../components/VideoUploader';
 
 const DashboardPage = () => {
 	const { user } = useAuthStore();
@@ -35,24 +36,34 @@ const DashboardPage = () => {
 		}
 	};
 
-	const handlePost = async () => {
-		if (!videoFile) {
+	const handleFileSelect = (file) => {
+		setVideoFile(file);
+	};
+
+	const handlePost = async (file, description) => {
+		if (!file) {
 			toast.error('Please select a video first');
 			return;
 		}
 
 		setIsPosting(true);
 		const formData = new FormData();
-		formData.append('video', videoFile);
+		formData.append('video', file);
 		formData.append('description', description);
 
 		try {
-			await axios.post('/api/post/video', formData);
+			await axios.post('/api/post/video', formData, {
+				headers: {
+					'Content-Type': 'multipart/form-data'
+				}
+			});
+			
 			toast.success('Video posted successfully');
 			setVideoFile(null);
 			setDescription('');
+			fetchAccounts(); // Refresh account status
 		} catch (error) {
-			toast.error('Failed to post video');
+			toast.error('Failed to post video: ' + error.message);
 		} finally {
 			setIsPosting(false);
 		}
@@ -74,10 +85,11 @@ const DashboardPage = () => {
 						onAccountsUpdate={fetchAccounts}
 					/>
 					
-					<div className="bg-gray-800 rounded-lg p-6">
-						<h2 className="text-2xl font-bold text-green-400 mb-4">Upload Video</h2>
-						{/* Add video upload form here */}
-					</div>
+					<VideoUploader 
+						onFileSelect={handleFileSelect}
+						onPost={handlePost}
+						isPosting={isPosting}
+					/>
 				</div>
 			</div>
 		</div>
