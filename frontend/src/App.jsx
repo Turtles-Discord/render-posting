@@ -65,10 +65,10 @@ function App() {
 				<Route path="/terms" element={<TermsPage />} />
 				<Route path="/privacy" element={<PrivacyPage />} />
 				<Route 
-					path="/terms/tiktokkvkWqvHcwGX5sTpj4OKn40YIY8VFQV83.txt" 
+					path="/tiktokrjGuNvRAwESoGlUOI19JJ8xI27Ysc0lu.txt" 
 					element={
 						<pre style={{ whiteSpace: 'pre-wrap' }}>
-							tiktok-developers-site-verification=kvkWqvHcwGX5sTpj4OKn40YIY8VFQV83
+							tiktok-developers-site-verification=rjGuNvRAwESoGlUOI19JJ8xI27Ysc0lu
 						</pre>
 					} 
 				/>
