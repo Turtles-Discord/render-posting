@@ -3,6 +3,9 @@
 	"version": "1.0.0",
 	"description": "",
 	"main": "backend/index.js",
+	"engines": {
+		"node": "18.x"
+	},
 	"scripts": {
 		"dev": "set NODE_ENV=development&& nodemon backend/index.js",
 		"start": "node backend/index.js",
