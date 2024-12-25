@@ -6,12 +6,13 @@ import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import axios from 'axios';
 import VideoUploader from '../components/VideoUploader';
+import { Link } from 'react-router-dom';
 
 const DashboardPage = () => {
 	const { user } = useAuthStore();
 	const [accounts, setAccounts] = useState({
 			tiktok: [],
-			instagram: []
+				instagram: []
 	});
 	const [videoFile, setVideoFile] = useState(null);
 	const [description, setDescription] = useState('');
@@ -90,6 +91,19 @@ const DashboardPage = () => {
 						onPost={handlePost}
 						isPosting={isPosting}
 					/>
+
+					{/* Footer Links */}
+					<div className="pt-8 border-t border-gray-800">
+						<div className="flex justify-center space-x-4 text-sm text-gray-400">
+							<Link to="/terms" className="hover:text-green-400 transition-colors">
+								Terms of Service
+							</Link>
+							<span>•</span>
+							<Link to="/privacy" className="hover:text-green-400 transition-colors">
+								Privacy Policy
+							</Link>
+						</div>
+					</div>
 				</div>
 			</div>
 		</div>
