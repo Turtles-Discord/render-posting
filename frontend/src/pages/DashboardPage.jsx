@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 import axios from 'axios';
 import VideoUploader from '../components/VideoUploader';
 import { Link } from 'react-router-dom';
+import { useTiktokStore } from '../store/tiktokStore';
 
 const DashboardPage = () => {
 	const { user } = useAuthStore();
@@ -17,6 +18,7 @@ const DashboardPage = () => {
 	const [videoFile, setVideoFile] = useState(null);
 	const [description, setDescription] = useState('');
 	const [isPosting, setIsPosting] = useState(false);
+	const { connectTiktok, uploadVideo } = useTiktokStore();
 
 	useEffect(() => {
 		fetchAccounts();
@@ -41,28 +43,22 @@ const DashboardPage = () => {
 		setVideoFile(file);
 	};
 
-	const handlePost = async (file, description) => {
-		if (!file) {
+	const handleTiktokConnect = () => {
+		connectTiktok();
+	};
+
+	const handlePost = async () => {
+		if (!videoFile) {
 			toast.error('Please select a video first');
 			return;
 		}
 
 		setIsPosting(true);
-		const formData = new FormData();
-		formData.append('video', file);
-		formData.append('description', description);
-
 		try {
-			await axios.post('/api/post/video', formData, {
-				headers: {
-					'Content-Type': 'multipart/form-data'
-				}
-			});
-			
-			toast.success('Video posted successfully');
+			await uploadVideo(videoFile, description);
 			setVideoFile(null);
 			setDescription('');
-			fetchAccounts(); // Refresh account status
+			fetchAccounts();
 		} catch (error) {
 			toast.error('Failed to post video: ' + error.message);
 		} finally {
@@ -75,6 +71,18 @@ const DashboardPage = () => {
 			<Navigation />
 			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 				<div className="space-y-8">
+					<div className="bg-gray-800 rounded-lg p-6">
+						<div className="flex justify-between items-center">
+							<h2 className="text-2xl font-bold text-green-400">TikTok Account</h2>
+							<button
+								onClick={handleTiktokConnect}
+								className="px-4 py-2 bg-[#ff0050] text-white rounded-lg hover:bg-[#d6004c] transition-colors"
+							>
+								Connect TikTok
+							</button>
+						</div>
+					</div>
+
 					<PlatformSection 
 						platform="tiktok"
 						accounts={accounts.tiktok || []}
@@ -90,6 +98,8 @@ const DashboardPage = () => {
 						onFileSelect={handleFileSelect}
 						onPost={handlePost}
 						isPosting={isPosting}
+						description={description}
+						onDescriptionChange={(e) => setDescription(e.target.value)}
 					/>
 
 					{/* Footer Links */}

@@ -1,3 +1,6 @@
+import tiktokService from './services/tiktokService.js';
+import logger from './utils/logger.js';
+
 app.get('/terms/tiktokrjGuNvRAwESoGlUOI19JJ8xI27Ysc0lu.txt', (req, res) => {
   res.set('Content-Type', 'text/plain');
   res.send('tiktok-developers-site-verification=rjGuNvRAwESoGlUOI19JJ8xI27Ysc0lu');
@@ -6,13 +9,30 @@ app.get('/terms/tiktokrjGuNvRAwESoGlUOI19JJ8xI27Ysc0lu.txt', (req, res) => {
 // TikTok OAuth callback routes
 app.get('/auth/tiktok/callback', async (req, res) => {
   try {
-    // Handle web client callback
-    const { code } = req.query;
-    // Exchange code for access token
-    // Save user info
-    res.redirect('/dashboard');
+    const { code, state } = req.query;
+    
+    logger.info('Received TikTok callback', { state });
+
+    if (state !== process.env.CSRF_STATE) {
+      logger.error('Invalid CSRF state received', { 
+        received: state, 
+        expected: process.env.CSRF_STATE 
+      });
+      return res.redirect('/dashboard?error=invalid_state');
+    }
+
+    const tokenData = await tiktokService.exchangeCodeForToken(code);
+    
+    // Store the token in your database associated with the user
+    // ... your token storage logic here ...
+
+    logger.info('TikTok authentication successful');
+    res.redirect('/dashboard?success=true');
   } catch (error) {
-    res.redirect('/login?error=auth_failed');
+    logger.error('TikTok authentication failed', {
+      error: error.response?.data || error.message
+    });
+    res.redirect('/dashboard?error=auth_failed');
   }
 });
 
