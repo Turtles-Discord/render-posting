@@ -10,7 +10,19 @@ export const useTiktokStore = create((set) => ({
   connectTiktok: async () => {
     try {
       const response = await axios.get('/api/tiktok/auth-url');
-      window.location.href = response.data.url;
+      const authUrl = response.data.url;
+      
+      // Open popup window
+      const width = 600;
+      const height = 600;
+      const left = window.screen.width / 2 - width / 2;
+      const top = window.screen.height / 2 - height / 2;
+
+      window.open(
+        authUrl,
+        'TikTok Login',
+        `toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=no, resizable=no, copyhistory=no, width=${width}, height=${height}, top=${top}, left=${left}`
+      );
     } catch (error) {
       toast.error('Failed to initiate TikTok connection');
       console.error('TikTok connection error:', error);
