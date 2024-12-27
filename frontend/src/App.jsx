@@ -13,6 +13,7 @@ import { useAuthStore } from "./store/authStore";
 import { useEffect } from "react";
 import TermsPage from './pages/TermsPage';
 import PrivacyPage from './pages/PrivacyPage';
+import WelcomePage from "./pages/WelcomePage";
 
 const ProtectedRoute = ({ children }) => {
 	const { isAuthenticated } = useAuthStore();
@@ -64,6 +65,7 @@ function App() {
 				<Route path="/reset-password/:token" element={<ResetPasswordPage />} />
 				<Route path="/terms" element={<TermsPage />} />
 				<Route path="/privacy" element={<PrivacyPage />} />
+				<Route path="/" element={<WelcomePage />} />
 				<Route 
 					path="/tiktokrjGuNvRAwESoGlUOI19JJ8xI27Ysc0lu.txt" 
 					element={
@@ -72,7 +74,6 @@ function App() {
 						</pre>
 					} 
 				/>
-				<Route path="/" element={<Navigate to="/dashboard" replace />} />
 			</Routes>
 			<Toaster position="top-center" reverseOrder={false} />
 		</div>
