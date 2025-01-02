@@ -25,6 +25,7 @@ app.get('/auth/tiktok/callback', async (req, res) => {
     
     // Store the token in your database associated with the user
     // ... your token storage logic here ...
+    //this is a test 
 
     logger.info('TikTok authentication successful');
     res.redirect('/dashboard?success=true');
