@@ -12,12 +12,12 @@ const TermsPage = () => {
             
             <section className="space-y-3">
               <h2 className="text-xl font-semibold text-green-400">1. Introduction</h2>
-              <p>Welcome to PostMaster ("we," "our," or "us"). By accessing or using our website and services, you agree to these Terms of Service. Please read them carefully.</p>
+              <p>Welcome to Social Media Poster ("we," "our," or "us"). By accessing or using our website and services, you agree to these Terms of Service. Please read them carefully.</p>
             </section>
 
             <section className="space-y-3">
               <h2 className="text-xl font-semibold text-green-400">2. Description of Service</h2>
-              <p>PostMaster provides a platform for managing and publishing content to various social media platforms, including TikTok. Our service allows users to schedule, post, and manage their social media content through our web interface.</p>
+              <p>Social Media Poster provides a platform for managing and publishing content to various social media platforms, including TikTok. Our service allows users to schedule, post, and manage their social media content through our web interface.</p>
             </section>
 
             <section className="space-y-3">
@@ -87,7 +87,7 @@ const TermsPage = () => {
 
             <section className="space-y-3">
               <h2 className="text-xl font-semibold text-green-400">9. Intellectual Property</h2>
-              <p>All service-related intellectual property, including but not limited to software, designs, and logos, belongs to PostMaster and is protected by copyright and trademark laws.</p>
+              <p>All service-related intellectual property, including but not limited to software, designs, and logos, belongs to Social Media Poster and is protected by copyright and trademark laws.</p>
             </section>
 
             <section className="space-y-3">
@@ -95,12 +95,12 @@ const TermsPage = () => {
               <p>For questions about these terms or our service:</p>
               <ul className="list-none space-y-2">
                 <li>Email: buyyav20@gmail.com</li>
-                <li>Website:https://render-posting.onrender.com/</li>
+                <li>Website: https://render-posting.onrender.com/</li>
               </ul>
             </section>
 
             <section className="space-y-3 mt-8">
-              <p className="text-sm text-gray-400">By using PostMaster, you acknowledge that you have read, understood, and agree to these Terms of Service.</p>
+              <p className="text-sm text-gray-400">By using Social Media Poster, you acknowledge that you have read, understood, and agree to these Terms of Service.</p>
             </section>
           </div>
         </div>
