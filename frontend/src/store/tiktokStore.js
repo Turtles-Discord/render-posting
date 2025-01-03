@@ -36,11 +36,15 @@ export const useTiktokStore = create((set) => ({
       const handleMessage = (event) => {
         console.log('Received message:', event.data);
         
-        const { success, userData } = event.data;
-        if (success && userData) {
+        const { type, userData } = event.data;
+        if (type === 'TIKTOK_AUTH_SUCCESS' && userData) {
           console.log('Setting user data:', userData);
-          set({ user: userData });
+          set({ user: userData, isConnecting: false });
           toast.success('TikTok account connected successfully!');
+          window.removeEventListener('message', handleMessage);
+        } else if (type === 'TIKTOK_AUTH_ERROR') {
+          set({ error: event.data.error, isConnecting: false });
+          toast.error('Failed to connect TikTok account');
           window.removeEventListener('message', handleMessage);
         }
       };

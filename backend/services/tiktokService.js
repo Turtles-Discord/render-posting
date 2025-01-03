@@ -11,15 +11,11 @@ class TiktokService {
   }
 
   getAuthUrl() {
-    // Generate a random state for this session
-    const state = Math.random().toString(36).substring(7);
-    
     const params = new URLSearchParams({
       client_key: this.clientKey,
       scope: 'user.info.basic,video.publish',
       response_type: 'code',
       redirect_uri: this.redirectUri,
-      state: state,
       platform: 'web'
     });
     
