@@ -16,9 +16,7 @@ class TiktokService {
       scope: 'user.info.basic,video.publish',
       response_type: 'code',
       redirect_uri: `${process.env.CLIENT_URL}/auth/tiktok/callback`,
-      state: this.csrfState,
-      platform: 'web',
-      aid: process.env.TIKTOK_APP_ID
+      state: this.csrfState
     });
     return `${this.authApiUrl}?${params.toString()}`;
   }
@@ -32,21 +30,26 @@ class TiktokService {
         code,
         grant_type: 'authorization_code',
         redirect_uri: `${process.env.CLIENT_URL}/auth/tiktok/callback`
-      }, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache'
-        }
       });
       
       logger.info('Successfully obtained TikTok access token');
       return response.data;
     } catch (error) {
-      logger.error('Error exchanging code for token:', {
-        error: error.response?.data || error.message,
-        clientKey: this.clientKey,
-        code
+      logger.error('Error exchanging code for token:', error);
+      throw error;
+    }
+  }
+
+  async getUserInfo(accessToken) {
+    try {
+      const response = await axios.get(`${this.apiUrl}user/info/`, {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        }
       });
+      return response.data;
+    } catch (error) {
+      logger.error('Error getting user info:', error);
       throw error;
     }
   }
