@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 
 export const useTiktokStore = create((set) => ({
   isConnecting: false,
-  accounts: [],
+  user: null,
   error: null,
 
   connectTiktok: async () => {
@@ -23,6 +23,17 @@ export const useTiktokStore = create((set) => ({
         'TikTok Login',
         `toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=no, resizable=no, copyhistory=no, width=${width}, height=${height}, top=${top}, left=${left}`
       );
+
+      // Add message listener for popup callback
+      window.addEventListener('message', (event) => {
+        if (event.origin === window.location.origin) {
+          const { success, userData } = event.data;
+          if (success && userData) {
+            set({ user: userData });
+            toast.success('TikTok account connected successfully!');
+          }
+        }
+      });
     } catch (error) {
       toast.error('Failed to initiate TikTok connection');
       console.error('TikTok connection error:', error);
@@ -48,5 +59,7 @@ export const useTiktokStore = create((set) => ({
     } finally {
       set({ isUploading: false });
     }
-  }
+  },
+  setUser: (userData) => set({ user: userData }),
+  clearUser: () => set({ user: null })
 })); 

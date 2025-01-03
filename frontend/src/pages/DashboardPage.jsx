@@ -18,7 +18,7 @@ const DashboardPage = () => {
 	const [videoFile, setVideoFile] = useState(null);
 	const [description, setDescription] = useState('');
 	const [isPosting, setIsPosting] = useState(false);
-	const { connectTiktok, uploadVideo } = useTiktokStore();
+	const { connectTiktok, uploadVideo, user: tiktokUser } = useTiktokStore();
 
 	useEffect(() => {
 		fetchAccounts();
@@ -74,12 +74,21 @@ const DashboardPage = () => {
 					<div className="bg-gray-800 rounded-lg p-6">
 						<div className="flex justify-between items-center">
 							<h2 className="text-2xl font-bold text-green-400">TikTok Account</h2>
-							<button
-								onClick={handleTiktokConnect}
-								className="px-4 py-2 bg-[#ff0050] text-white rounded-lg hover:bg-[#d6004c] transition-colors"
-							>
-								Connect TikTok
-							</button>
+							{tiktokUser ? (
+								<div className="flex items-center space-x-4">
+									<span className="text-white">Connected as: {tiktokUser.display_name}</span>
+									{tiktokUser.avatar_url && (
+										<img src={tiktokUser.avatar_url} alt="Profile" className="w-8 h-8 rounded-full" />
+									)}
+								</div>
+							) : (
+								<button
+									onClick={handleTiktokConnect}
+									className="px-4 py-2 bg-[#ff0050] text-white rounded-lg hover:bg-[#d6004c] transition-colors"
+								>
+									Connect TikTok
+								</button>
+							)}
 						</div>
 					</div>
 
