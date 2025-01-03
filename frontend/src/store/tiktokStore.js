@@ -9,34 +9,38 @@ export const useTiktokStore = create((set) => ({
 
   connectTiktok: async () => {
     try {
+      console.log('Initiating TikTok connection');
       const response = await axios.get('/api/tiktok/auth-url');
       const authUrl = response.data.url;
       
-      // Open popup window
       const width = 600;
       const height = 600;
       const left = window.screen.width / 2 - width / 2;
       const top = window.screen.height / 2 - height / 2;
 
-      window.open(
+      const popup = window.open(
         authUrl,
         'TikTok Login',
         `toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=no, resizable=no, copyhistory=no, width=${width}, height=${height}, top=${top}, left=${left}`
       );
 
       // Add message listener for popup callback
-      window.addEventListener('message', (event) => {
-        if (event.origin === window.location.origin) {
-          const { success, userData } = event.data;
-          if (success && userData) {
-            set({ user: userData });
-            toast.success('TikTok account connected successfully!');
-          }
+      const handleMessage = (event) => {
+        console.log('Received message:', event.data);
+        
+        const { success, userData } = event.data;
+        if (success && userData) {
+          console.log('Setting user data:', userData);
+          set({ user: userData });
+          toast.success('TikTok account connected successfully!');
+          window.removeEventListener('message', handleMessage);
         }
-      });
+      };
+
+      window.addEventListener('message', handleMessage);
     } catch (error) {
-      toast.error('Failed to initiate TikTok connection');
       console.error('TikTok connection error:', error);
+      toast.error('Failed to initiate TikTok connection');
     }
   },
 
@@ -60,6 +64,9 @@ export const useTiktokStore = create((set) => ({
       set({ isUploading: false });
     }
   },
-  setUser: (userData) => set({ user: userData }),
+  setUser: (userData) => {
+    console.log('Setting user data manually:', userData);
+    set({ user: userData });
+  },
   clearUser: () => set({ user: null })
 })); 
