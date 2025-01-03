@@ -10,14 +10,41 @@ import { Link } from 'react-router-dom';
 import { useTiktokStore } from '../store/tiktokStore';
 
 const DashboardPage = () => {
-	const { user, connectTiktok, uploadVideo } = useTiktokStore();
-	const [isPosting, setIsPosting] = useState(false);
+	const { user } = useAuthStore();
+	const [accounts, setAccounts] = useState({
+			tiktok: [],
+				instagram: []
+	});
 	const [videoFile, setVideoFile] = useState(null);
 	const [description, setDescription] = useState('');
-	const [accounts, setAccounts] = useState({ tiktok: [], instagram: [] });
+	const [isPosting, setIsPosting] = useState(false);
+	const { connectTiktok, uploadVideo } = useTiktokStore();
+
+	useEffect(() => {
+		fetchAccounts();
+	}, []);
+
+	const fetchAccounts = async () => {
+		try {
+			setAccounts({
+				tiktok: [],
+				instagram: []
+			});
+		} catch (error) {
+			toast.error('Failed to fetch accounts');
+			setAccounts({
+				tiktok: [],
+				instagram: []
+			});
+		}
+	};
 
 	const handleFileSelect = (file) => {
 		setVideoFile(file);
+	};
+
+	const handleTiktokConnect = () => {
+		connectTiktok();
 	};
 
 	const handlePost = async () => {
@@ -26,36 +53,18 @@ const DashboardPage = () => {
 			return;
 		}
 
+		setIsPosting(true);
 		try {
-			setIsPosting(true);
 			await uploadVideo(videoFile, description);
 			setVideoFile(null);
 			setDescription('');
+			fetchAccounts();
 		} catch (error) {
-			console.error('Post error:', error);
+			toast.error('Failed to post video: ' + error.message);
 		} finally {
 			setIsPosting(false);
 		}
 	};
-
-	const fetchAccounts = async () => {
-		try {
-			// This will be implemented later when we add account management
-			// For now, we'll just use the connected user state
-			if (user) {
-				setAccounts({ 
-					tiktok: [{ id: 1, username: user.display_name }],
-					instagram: []
-				});
-			}
-		} catch (error) {
-			console.error('Error fetching accounts:', error);
-		}
-	};
-
-	useEffect(() => {
-		fetchAccounts();
-	}, [user]);
 
 	return (
 		<div className="min-h-screen bg-gray-900">
@@ -65,19 +74,12 @@ const DashboardPage = () => {
 					<div className="bg-gray-800 rounded-lg p-6">
 						<div className="flex justify-between items-center">
 							<h2 className="text-2xl font-bold text-green-400">TikTok Account</h2>
-							{user ? (
-								<div className="flex items-center space-x-4">
-									<span className="text-white">Connected as: {user.display_name}</span>
-									<img src={user.avatar_url} alt="Profile" className="w-8 h-8 rounded-full" />
-								</div>
-							) : (
-								<button
-									onClick={connectTiktok}
-									className="px-4 py-2 bg-[#ff0050] text-white rounded-lg hover:bg-[#d6004c] transition-colors"
-								>
-									Connect TikTok
-								</button>
-							)}
+							<button
+								onClick={handleTiktokConnect}
+								className="px-4 py-2 bg-[#ff0050] text-white rounded-lg hover:bg-[#d6004c] transition-colors"
+							>
+								Connect TikTok
+							</button>
 						</div>
 					</div>
 
