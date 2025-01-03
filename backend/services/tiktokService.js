@@ -11,17 +11,17 @@ class TiktokService {
   }
 
   getAuthUrl() {
-    const params = new URLSearchParams({
+    // First create the authorization URL
+    const authParams = new URLSearchParams({
       client_key: this.clientKey,
       scope: 'user.info.basic,video.publish',
       response_type: 'code',
       redirect_uri: this.redirectUri,
       platform: 'web'
     });
-    
-    const baseUrl = 'https://www.tiktok.com/login';
-    const authUrl = `https://www.tiktok.com/v2/auth/authorize/?${params.toString()}`;
-    
+    const authUrl = `https://www.tiktok.com/v2/auth/authorize/?${authParams.toString()}`;
+
+    // Then create the login URL that redirects to the auth URL
     const loginParams = new URLSearchParams({
       lang: 'en',
       enter_method: 'web',
@@ -31,8 +31,8 @@ class TiktokService {
       type: '',
       no_cta_popup: '1'
     });
-    
-    return `${baseUrl}?${loginParams.toString()}`;
+
+    return `https://www.tiktok.com/login?${loginParams.toString()}`;
   }
 
   async exchangeCodeForToken(code) {
