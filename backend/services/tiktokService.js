@@ -23,10 +23,7 @@ class TiktokService {
       platform: 'web'
     });
     
-    return {
-      url: `https://www.tiktok.com/v2/auth/authorize/?${params.toString()}`,
-      state: state
-    };
+    return `https://www.tiktok.com/v2/auth/authorize/?${params.toString()}`;
   }
 
   async exchangeCodeForToken(code) {

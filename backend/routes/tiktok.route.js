@@ -7,8 +7,9 @@ const router = express.Router();
 
 router.get('/auth-url', verifyToken, (req, res) => {
   try {
-    const authUrlData = tiktokService.getAuthUrl();
-    res.json({ url: authUrlData.url });
+    const authUrl = tiktokService.getAuthUrl();
+    console.log('Generated auth URL:', authUrl);
+    res.json({ url: authUrl });
   } catch (error) {
     logger.error('Error generating auth URL:', error);
     res.status(500).json({ error: 'Failed to generate auth URL' });

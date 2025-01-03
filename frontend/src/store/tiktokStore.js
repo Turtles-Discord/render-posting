@@ -10,7 +10,15 @@ export const useTiktokStore = create((set) => ({
   connectTiktok: async () => {
     try {
       console.log('Initiating TikTok connection');
+      set({ isConnecting: true, error: null });
+      
       const response = await axios.get('/api/tiktok/auth-url');
+      console.log('Auth URL response:', response.data);
+      
+      if (!response.data.url) {
+        throw new Error('Invalid auth URL response');
+      }
+      
       const authUrl = response.data.url;
       
       const width = 600;
@@ -40,6 +48,7 @@ export const useTiktokStore = create((set) => ({
       window.addEventListener('message', handleMessage);
     } catch (error) {
       console.error('TikTok connection error:', error);
+      set({ error: error.message, isConnecting: false });
       toast.error('Failed to initiate TikTok connection');
     }
   },
