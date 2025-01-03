@@ -26,6 +26,8 @@ export const useTiktokStore = create((set) => ({
       const left = window.screen.width / 2 - width / 2;
       const top = window.screen.height / 2 - height / 2;
 
+      window.addEventListener('message', handleMessage);
+
       const popup = window.open(
         authUrl,
         'TikTok Login',
@@ -52,8 +54,6 @@ export const useTiktokStore = create((set) => ({
           window.removeEventListener('message', handleMessage);
         }
       };
-
-      window.addEventListener('message', handleMessage);
     } catch (error) {
       console.error('TikTok connection error:', error);
       set({ error: error.message, isConnecting: false });
