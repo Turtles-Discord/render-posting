@@ -13,13 +13,26 @@ class TiktokService {
   getAuthUrl() {
     const params = new URLSearchParams({
       client_key: this.clientKey,
-      scope: 'user.info.basic,video.publish',
+      scope: 'user.info.basic,user.info.profile,user.info.stats,share.sound.create,video.list,video.upload,video.publish',
       response_type: 'code',
       redirect_uri: this.redirectUri,
       platform: 'web'
     });
     
-    return `https://www.tiktok.com/v2/auth/authorize/?${params.toString()}`;
+    const baseUrl = 'https://www.tiktok.com/login';
+    const authUrl = `https://www.tiktok.com/v2/auth/authorize/?${params.toString()}`;
+    
+    const loginParams = new URLSearchParams({
+      lang: 'en',
+      enter_method: 'web',
+      enter_from: `dev_${this.clientKey}`,
+      redirect_url: encodeURIComponent(authUrl),
+      hide_left_icon: '0',
+      type: '',
+      no_cta_popup: '1'
+    });
+    
+    return `${baseUrl}?${loginParams.toString()}`;
   }
 
   async exchangeCodeForToken(code) {

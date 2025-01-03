@@ -18,11 +18,8 @@ app.get('/auth/tiktok/callback', async (req, res) => {
     
     const tokenData = await tiktokService.exchangeCodeForToken(code);
     console.log('Token data received:', tokenData);
-    
-    if (!tokenData?.data?.user) {
-      throw new Error('Invalid token data received');
-    }
 
+    // Redirect to dashboard with success message
     const script = `
       <script>
         if (window.opener) {
@@ -32,8 +29,12 @@ app.get('/auth/tiktok/callback', async (req, res) => {
               display_name: "${tokenData.data.user.display_name}",
               avatar_url: "${tokenData.data.user.avatar_url || ''}"
             }
-          }, "*");
-          setTimeout(() => window.close(), 1000);
+          }, "${process.env.CLIENT_URL}");
+          
+          setTimeout(() => {
+            window.close();
+            window.opener.location.reload();
+          }, 1000);
         }
       </script>
     `;
@@ -41,18 +42,7 @@ app.get('/auth/tiktok/callback', async (req, res) => {
     res.send(script);
   } catch (error) {
     console.error('TikTok auth error:', error);
-    const script = `
-      <script>
-        if (window.opener) {
-          window.opener.postMessage({ 
-            type: 'TIKTOK_AUTH_ERROR', 
-            error: 'Authentication failed' 
-          }, "*");
-          setTimeout(() => window.close(), 1000);
-        }
-      </script>
-    `;
-    res.send(script);
+    res.redirect(`${process.env.CLIENT_URL}/dashboard?error=auth_failed`);
   }
 });
 
