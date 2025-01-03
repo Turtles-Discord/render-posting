@@ -7,7 +7,7 @@ class TiktokService {
     this.apiUrl = process.env.TIKTOK_API_URL;
     this.clientKey = process.env.TIKTOK_CLIENT_KEY;
     this.clientSecret = process.env.TIKTOK_CLIENT_SECRET;
-    this.redirectUri = 'https://render-posting.onrender.com/auth/tiktok/callback';
+    this.redirectUri = process.env.CLIENT_URL + '/auth/tiktok/callback';
   }
 
   getAuthUrl() {
