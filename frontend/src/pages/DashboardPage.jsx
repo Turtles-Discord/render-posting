@@ -14,6 +14,48 @@ const DashboardPage = () => {
 	const [isPosting, setIsPosting] = useState(false);
 	const [videoFile, setVideoFile] = useState(null);
 	const [description, setDescription] = useState('');
+	const [accounts, setAccounts] = useState({ tiktok: [], instagram: [] });
+
+	const handleFileSelect = (file) => {
+		setVideoFile(file);
+	};
+
+	const handlePost = async () => {
+		if (!videoFile) {
+			toast.error('Please select a video first');
+			return;
+		}
+
+		try {
+			setIsPosting(true);
+			await uploadVideo(videoFile, description);
+			setVideoFile(null);
+			setDescription('');
+		} catch (error) {
+			console.error('Post error:', error);
+		} finally {
+			setIsPosting(false);
+		}
+	};
+
+	const fetchAccounts = async () => {
+		try {
+			// This will be implemented later when we add account management
+			// For now, we'll just use the connected user state
+			if (user) {
+				setAccounts({ 
+					tiktok: [{ id: 1, username: user.display_name }],
+					instagram: []
+				});
+			}
+		} catch (error) {
+			console.error('Error fetching accounts:', error);
+		}
+	};
+
+	useEffect(() => {
+		fetchAccounts();
+	}, [user]);
 
 	return (
 		<div className="min-h-screen bg-gray-900">
