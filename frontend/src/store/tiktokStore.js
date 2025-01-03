@@ -26,19 +26,7 @@ export const useTiktokStore = create((set) => ({
       const left = window.screen.width / 2 - width / 2;
       const top = window.screen.height / 2 - height / 2;
 
-      window.addEventListener('message', handleMessage);
-
-      const popup = window.open(
-        authUrl,
-        'TikTok Login',
-        `toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=no, resizable=no, copyhistory=no, width=${width}, height=${height}, top=${top}, left=${left}`
-      );
-
-      if (!popup) {
-        throw new Error('Popup blocked! Please allow popups for this site.');
-      }
-
-      // Add message listener for popup callback
+      // Define handleMessage before using it
       const handleMessage = (event) => {
         console.log('Received message:', event.data);
         
@@ -54,6 +42,21 @@ export const useTiktokStore = create((set) => ({
           window.removeEventListener('message', handleMessage);
         }
       };
+
+      // Add event listener before opening popup
+      window.addEventListener('message', handleMessage);
+      
+      const popup = window.open(
+        authUrl,
+        'TikTok Login',
+        `toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=no, resizable=no, copyhistory=no, width=${width}, height=${height}, top=${top}, left=${left}`
+      );
+
+      if (!popup) {
+        window.removeEventListener('message', handleMessage);
+        throw new Error('Popup blocked! Please allow popups for this site.');
+      }
+
     } catch (error) {
       console.error('TikTok connection error:', error);
       set({ error: error.message, isConnecting: false });
