@@ -7,32 +7,19 @@ class TiktokService {
     this.apiUrl = process.env.TIKTOK_API_URL;
     this.clientKey = process.env.TIKTOK_CLIENT_KEY;
     this.clientSecret = process.env.TIKTOK_CLIENT_SECRET;
-    this.redirectUri = process.env.CLIENT_URL + '/auth/tiktok/callback';
+    this.redirectUri = process.env.CLIENT_URL + '/api/auth/tiktok/callback';
   }
 
   getAuthUrl() {
-    // First create the authorization URL
-    const authParams = new URLSearchParams({
+    const params = new URLSearchParams({
       client_key: this.clientKey,
       scope: 'user.info.basic,video.publish',
       response_type: 'code',
       redirect_uri: this.redirectUri,
-      platform: 'web'
+      state: Math.random().toString(36).substring(7)
     });
-    const authUrl = `https://www.tiktok.com/v2/auth/authorize/?${authParams.toString()}`;
-
-    // Then create the login URL that redirects to the auth URL
-    const loginParams = new URLSearchParams({
-      lang: 'en',
-      enter_method: 'web',
-      enter_from: `dev_${this.clientKey}`,
-      redirect_url: encodeURIComponent(authUrl),
-      hide_left_icon: '0',
-      type: '',
-      no_cta_popup: '1'
-    });
-
-    return `https://www.tiktok.com/login?${loginParams.toString()}`;
+    
+    return `https://www.tiktok.com/v2/auth/authorize/?${params.toString()}`;
   }
 
   async exchangeCodeForToken(code) {

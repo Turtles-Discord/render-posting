@@ -6,20 +6,19 @@ app.get('/terms/tiktokrjGuNvRAwESoGlUOI19JJ8xI27Ysc0lu.txt', (req, res) => {
   res.send('tiktok-developers-site-verification=rjGuNvRAwESoGlUOI19JJ8xI27Ysc0lu');
 });
 
-// TikTok OAuth callback routes
-app.get('/auth/tiktok/callback', async (req, res) => {
+app.get('/api/auth/tiktok/callback', async (req, res) => {
   try {
     const { code } = req.query;
-    console.log('Callback received with code:', code);
+    console.log('Full callback URL:', req.originalUrl);
+    console.log('Query parameters:', req.query);
     
     if (!code) {
       throw new Error('No authorization code received');
     }
     
     const tokenData = await tiktokService.exchangeCodeForToken(code);
-    console.log('Token data received:', tokenData);
-
-    // Redirect to dashboard with success message
+    console.log('Token exchange response:', tokenData);
+    
     const script = `
       <script>
         if (window.opener) {
@@ -30,31 +29,25 @@ app.get('/auth/tiktok/callback', async (req, res) => {
               avatar_url: "${tokenData.data.user.avatar_url || ''}"
             }
           }, "${process.env.CLIENT_URL}");
-          
-          setTimeout(() => {
-            window.close();
-            window.opener.location.reload();
-          }, 1000);
+          setTimeout(() => window.close(), 1000);
         }
       </script>
     `;
-
     res.send(script);
   } catch (error) {
-    console.error('TikTok auth error:', error);
-    res.redirect(`${process.env.CLIENT_URL}/dashboard?error=auth_failed`);
-  }
-});
-
-app.get('/api/auth/tiktok/callback', async (req, res) => {
-  try {
-    // Handle API callback
-    const { code } = req.query;
-    // Exchange code for access token
-    // Return response
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ success: false, error: 'Authentication failed' });
+    console.error('Detailed error:', error);
+    const script = `
+      <script>
+        if (window.opener) {
+          window.opener.postMessage({
+            type: 'TIKTOK_AUTH_ERROR',
+            error: 'Authentication failed: ${error.message}'
+          }, "${process.env.CLIENT_URL}");
+          setTimeout(() => window.close(), 1000);
+        }
+      </script>
+    `;
+    res.send(script);
   }
 });
 

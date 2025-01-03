@@ -32,6 +32,10 @@ export const useTiktokStore = create((set) => ({
         `toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=no, resizable=no, copyhistory=no, width=${width}, height=${height}, top=${top}, left=${left}`
       );
 
+      if (!popup) {
+        throw new Error('Popup blocked! Please allow popups for this site.');
+      }
+
       // Add message listener for popup callback
       const handleMessage = (event) => {
         console.log('Received message:', event.data);
