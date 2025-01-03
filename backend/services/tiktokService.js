@@ -13,7 +13,7 @@ class TiktokService {
   getAuthUrl() {
     const params = new URLSearchParams({
       client_key: this.clientKey,
-      scope: 'user.info.basic,user.info.profile,user.info.stats,share.sound.create,video.list,video.upload,video.publish',
+      scope: 'user.info.basic,video.publish',
       response_type: 'code',
       redirect_uri: this.redirectUri,
       platform: 'web'
