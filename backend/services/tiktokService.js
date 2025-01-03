@@ -7,19 +7,26 @@ class TiktokService {
     this.apiUrl = process.env.TIKTOK_API_URL;
     this.clientKey = process.env.TIKTOK_CLIENT_KEY;
     this.clientSecret = process.env.TIKTOK_CLIENT_SECRET;
-    this.csrfState = process.env.CSRF_STATE;
+    this.redirectUri = 'https://render-posting.onrender.com/auth/tiktok/callback';
   }
 
   getAuthUrl() {
+    // Generate a random state for this session
+    const state = Math.random().toString(36).substring(7);
+    
     const params = new URLSearchParams({
-      client_key: 'awauf751zhz12bu1',
+      client_key: this.clientKey,
       scope: 'user.info.basic,video.publish',
       response_type: 'code',
-      redirect_uri: 'https://render-posting.onrender.com/auth/tiktok/callback',
-      state: this.csrfState,
+      redirect_uri: this.redirectUri,
+      state: state,
       platform: 'web'
     });
-    return `https://www.tiktok.com/v2/auth/authorize/?${params.toString()}`;
+    
+    return {
+      url: `https://www.tiktok.com/v2/auth/authorize/?${params.toString()}`,
+      state: state
+    };
   }
 
   async exchangeCodeForToken(code) {
@@ -30,22 +37,13 @@ class TiktokService {
         client_secret: this.clientSecret,
         code,
         grant_type: 'authorization_code',
-        redirect_uri: `${process.env.CLIENT_URL}/auth/tiktok/callback`
-      }, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache'
-        }
+        redirect_uri: this.redirectUri
       });
       
       logger.info('Successfully obtained TikTok access token');
       return response.data;
     } catch (error) {
-      logger.error('Error exchanging code for token:', {
-        error: error.response?.data || error.message,
-        clientKey: this.clientKey,
-        code
-      });
+      logger.error('Error exchanging code for token:', error);
       throw error;
     }
   }
