@@ -12,15 +12,14 @@ class TiktokService {
 
   getAuthUrl() {
     const params = new URLSearchParams({
-      client_key: this.clientKey,
+      client_key: 'awauf751zhz12bu1',
       scope: 'user.info.basic,video.publish',
       response_type: 'code',
-      redirect_uri: `${process.env.CLIENT_URL}/auth/tiktok/callback`,
+      redirect_uri: 'https://render-posting.onrender.com/auth/tiktok/callback',
       state: this.csrfState,
-      platform: 'web',
-      aid: process.env.TIKTOK_APP_ID
+      platform: 'web'
     });
-    return `${this.authApiUrl}?${params.toString()}`;
+    return `https://www.tiktok.com/v2/auth/authorize/?${params.toString()}`;
   }
 
   async exchangeCodeForToken(code) {

@@ -14,21 +14,27 @@ app.get('/auth/tiktok/callback', async (req, res) => {
     logger.info('Received TikTok callback', { state });
 
     if (state !== process.env.CSRF_STATE) {
-      logger.error('Invalid CSRF state received', { 
-        received: state, 
-        expected: process.env.CSRF_STATE 
-      });
+      logger.error('Invalid CSRF state received');
       return res.redirect('/dashboard?error=invalid_state');
     }
 
     const tokenData = await tiktokService.exchangeCodeForToken(code);
     
-    // Store the token in your database associated with the user
-    // ... your token storage logic here ...
-    //this is a test 
+    // Send user data back to opener window
+    const script = `
+      <script>
+        window.opener.postMessage({
+          success: true,
+          userData: {
+            display_name: "${tokenData.user.display_name}",
+            avatar_url: "${tokenData.user.avatar_url}"
+          }
+        }, "${process.env.CLIENT_URL}");
+        window.close();
+      </script>
+    `;
 
-    logger.info('TikTok authentication successful');
-    res.redirect('/dashboard?success=true');
+    res.send(script);
   } catch (error) {
     logger.error('TikTok authentication failed', {
       error: error.response?.data || error.message
