@@ -2,9 +2,12 @@ import { create } from 'zustand';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
+const savedUser = localStorage.getItem('tiktokUser');
+const initialUser = savedUser ? JSON.parse(savedUser) : null;
+
 export const useTiktokStore = create((set) => ({
   isConnecting: false,
-  user: null,
+  user: initialUser,
   error: null,
 
   connectTiktok: async () => {
@@ -43,12 +46,14 @@ export const useTiktokStore = create((set) => ({
             isConnecting: false,
             accessToken: userData.access_token 
           });
-          toast.success('TikTok account connected successfully!');
+          toast.success('Connected!');
           window.removeEventListener('message', handleMessage);
+          
+          // Update local storage
+          localStorage.setItem('tiktokUser', JSON.stringify(userData));
         } else if (type === 'TIKTOK_AUTH_ERROR') {
-          console.error('Auth error:', error);
           set({ error: error, isConnecting: false });
-          toast.error(error || 'Failed to connect TikTok account');
+          toast.error('Connection failed');
           window.removeEventListener('message', handleMessage);
         }
       };

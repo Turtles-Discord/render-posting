@@ -25,7 +25,7 @@ class TiktokService {
   async exchangeCodeForToken(code) {
     try {
       logger.info('Exchanging code for TikTok access token');
-      const response = await axios.post(`${this.apiUrl}oauth/access_token/`, {
+      const response = await axios.post('https://open.tiktokapis.com/v2/oauth/token/', {
         client_key: this.clientKey,
         client_secret: this.clientSecret,
         code,
@@ -33,10 +33,10 @@ class TiktokService {
         redirect_uri: this.redirectUri
       });
       
-      logger.info('Successfully obtained TikTok access token');
+      logger.info('Token data:', response.data);
       return response.data;
     } catch (error) {
-      logger.error('Error exchanging code for token:', error);
+      logger.error('Token exchange error:', error.response?.data || error);
       throw error;
     }
   }

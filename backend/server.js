@@ -35,10 +35,7 @@ app.get('/api/auth/tiktok/callback', async (req, res) => {
           } catch (e) {
             console.error('Error posting message:', e);
           }
-          setTimeout(() => {
-            window.close();
-            window.opener.location.reload();
-          }, 2000);
+          setTimeout(() => window.close(), 500);
         }
       </script>
     `;
