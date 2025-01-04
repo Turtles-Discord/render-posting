@@ -7,7 +7,7 @@ class TiktokService {
     this.apiUrl = process.env.TIKTOK_API_URL;
     this.clientKey = process.env.TIKTOK_CLIENT_KEY;
     this.clientSecret = process.env.TIKTOK_CLIENT_SECRET;
-    this.redirectUri = process.env.CLIENT_URL + '/api/auth/tiktok/callback';
+    this.redirectUri = process.env.TIKTOK_REDIRECT_URI || (process.env.CLIENT_URL + '/api/auth/tiktok/callback');
   }
 
   getAuthUrl() {
@@ -19,6 +19,7 @@ class TiktokService {
       state: Math.random().toString(36).substring(7)
     });
     
+    console.log('Generated redirect URI:', this.redirectUri); // Debug log
     return `https://www.tiktok.com/v2/auth/authorize/?${params.toString()}`;
   }
 
