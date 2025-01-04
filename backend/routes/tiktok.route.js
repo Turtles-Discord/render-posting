@@ -19,19 +19,25 @@ router.get('/auth-url', verifyToken, (req, res) => {
 router.post('/upload', verifyToken, async (req, res) => {
   try {
     const { file, description } = req.body;
-    // Get user's TikTok token from database
-    const user = await User.findById(req.userId);
-    const tiktokToken = user.tiktokToken;
+    if (!file) {
+      throw new Error('No file provided');
+    }
 
-    if (!tiktokToken) {
+    const user = await User.findById(req.userId);
+    if (!user || !user.tiktokToken) {
       throw new Error('TikTok account not connected');
     }
 
-    const result = await tiktokService.uploadVideo(tiktokToken, file, description);
+    console.log('Starting upload with token:', user.tiktokToken);
+    const result = await tiktokService.uploadVideo(user.tiktokToken, file, description);
+    console.log('Upload result:', result);
     res.json(result);
   } catch (error) {
-    logger.error('Video upload error:', error);
-    res.status(500).json({ error: error.message });
+    console.error('Detailed upload error:', error);
+    res.status(500).json({ 
+      error: error.message,
+      details: error.response?.data || 'Unknown error'
+    });
   }
 });
 

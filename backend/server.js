@@ -8,46 +8,55 @@ app.get('/terms/tiktokrjGuNvRAwESoGlUOI19JJ8xI27Ysc0lu.txt', (req, res) => {
 
 app.get('/api/auth/tiktok/callback', async (req, res) => {
   try {
-    const { code } = req.query;
-    console.log('Full callback URL:', req.originalUrl);
-    console.log('Query parameters:', req.query);
+    const { code, state } = req.query;
+    console.log('Callback received with code:', code);
+    console.log('Full URL:', req.originalUrl);
     
     if (!code) {
       throw new Error('No authorization code received');
     }
     
     const tokenData = await tiktokService.exchangeCodeForToken(code);
-    console.log('Token exchange response:', tokenData);
-    
+    console.log('Token data received:', tokenData);
+
+    // Send a more detailed success response
     const script = `
       <script>
         if (window.opener) {
-          window.opener.postMessage({
-            type: 'TIKTOK_AUTH_SUCCESS',
-            userData: {
-              display_name: "${tokenData.data.user.display_name}",
-              avatar_url: "${tokenData.data.user.avatar_url || ''}"
-            }
-          }, "${process.env.CLIENT_URL}");
-          setTimeout(() => window.close(), 1000);
+          try {
+            window.opener.postMessage({
+              type: 'TIKTOK_AUTH_SUCCESS',
+              userData: ${JSON.stringify({
+                display_name: tokenData.data.user.display_name,
+                avatar_url: tokenData.data.user.avatar_url || '',
+                access_token: tokenData.data.access_token
+              })}
+            }, "${process.env.CLIENT_URL}");
+          } catch (e) {
+            console.error('Error posting message:', e);
+          }
+          setTimeout(() => {
+            window.close();
+            window.opener.location.reload();
+          }, 2000);
         }
       </script>
     `;
     res.send(script);
   } catch (error) {
-    console.error('Detailed error:', error);
-    const script = `
+    console.error('Detailed TikTok auth error:', error);
+    const errorScript = `
       <script>
         if (window.opener) {
           window.opener.postMessage({
             type: 'TIKTOK_AUTH_ERROR',
             error: 'Authentication failed: ${error.message}'
           }, "${process.env.CLIENT_URL}");
-          setTimeout(() => window.close(), 1000);
+          setTimeout(() => window.close(), 2000);
         }
       </script>
     `;
-    res.send(script);
+    res.send(errorScript);
   }
 });
 
