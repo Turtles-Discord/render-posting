@@ -25,9 +25,9 @@ class TiktokService {
 
   async exchangeCodeForToken(code) {
     try {
-      logger.info('Exchanging code for TikTok access token');
+      logger.info('🔄 Starting token exchange...');
       
-      // Clean the code value by removing any extra parameters
+      // Clean the code value - remove everything after *
       const cleanCode = code.split('*')[0];
       
       const formData = new URLSearchParams();
@@ -37,27 +37,34 @@ class TiktokService {
       formData.append('grant_type', 'authorization_code');
       formData.append('redirect_uri', this.redirectUri);
 
-      logger.info('Token exchange request:', {
-        url: 'https://open.tiktokapis.com/v2/oauth/token/',
+      logger.info('📤 Token exchange request:', {
         code: cleanCode,
         redirect_uri: this.redirectUri
       });
 
-      const response = await axios.post(
-        'https://open.tiktokapis.com/v2/oauth/token/', 
-        formData,
-        {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Cache-Control': 'no-cache'
-          }
-        }
-      );
+      const response = await axios({
+        method: 'POST',
+        url: 'https://open.tiktokapis.com/v2/oauth/token/',
+        data: formData,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Cache-Control': 'no-cache'
+        },
+        validateStatus: false // Don't throw on non-2xx responses
+      });
       
-      logger.info('Token exchange response:', response.data);
+      logger.info('📥 Token exchange response:', {
+        status: response.status,
+        data: response.data
+      });
+
+      if (response.status !== 200) {
+        throw new Error(`Token exchange failed: ${JSON.stringify(response.data)}`);
+      }
+
       return response.data;
     } catch (error) {
-      logger.error('Token exchange error:', {
+      logger.error('❌ Token exchange error:', {
         message: error.message,
         response: error.response?.data,
         code: code

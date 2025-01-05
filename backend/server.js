@@ -9,66 +9,48 @@ app.get('/terms/tiktokrjGuNvRAwESoGlUOI19JJ8xI27Ysc0lu.txt', (req, res) => {
 app.get('/api/auth/tiktok/callback', async (req, res) => {
   try {
     const { code, state } = req.query;
-    console.log('🎯 Callback received:', {
-      code,
-      state,
-      fullUrl: req.originalUrl
-    });
+    logger.info('🎯 Callback received:', { code, state });
     
     if (!code) {
-      console.error('❌ No authorization code received');
       throw new Error('No authorization code received');
     }
     
-    console.log('🔄 Exchanging code for token...');
     const tokenData = await tiktokService.exchangeCodeForToken(code);
-    console.log('✅ Token data received:', tokenData);
+    logger.info('✅ Token data:', tokenData);
 
-    if (!tokenData.data || !tokenData.data.access_token) {
-      console.error('❌ Invalid token data received');
-      throw new Error('Invalid token data received');
-    }
-
-    console.log('📝 Preparing success response...');
+    // Send a simpler response script
     const script = `
       <script>
-        console.log('🎉 TikTok auth callback successful');
-        try {
-          console.log('📤 Sending success message to opener');
+        console.log('🎉 Auth successful, sending message to opener');
+        if (window.opener) {
           window.opener.postMessage({
             type: 'TIKTOK_AUTH_SUCCESS',
             userData: ${JSON.stringify({
-              display_name: tokenData.data.user.display_name || 'TikTok User',
-              avatar_url: tokenData.data.user.avatar_url || '',
-              access_token: tokenData.data.access_token,
-              open_id: tokenData.data.open_id
+              display_name: tokenData.data?.user?.display_name || 'TikTok User',
+              avatar_url: tokenData.data?.user?.avatar_url || '',
+              access_token: tokenData.data?.access_token,
+              open_id: tokenData.data?.open_id
             })}
           }, "${process.env.CLIENT_URL}");
-          console.log('✅ Message sent successfully');
-        } catch (e) {
-          console.error('❌ Error posting message:', e);
+          window.close();
+        } else {
+          console.error('No opener window found');
         }
-        console.log('🚪 Closing popup window');
-        window.close();
       </script>
     `;
     res.send(script);
   } catch (error) {
-    console.error('❌ TikTok auth error:', {
-      error: error.message,
-      response: error.response?.data,
-      stack: error.stack
-    });
-    
+    logger.error('❌ Auth error:', error);
     const script = `
       <script>
-        console.error('❌ TikTok auth failed:', ${JSON.stringify(error.message)});
-        window.opener.postMessage({
-          type: 'TIKTOK_AUTH_ERROR',
-          error: 'Authentication failed: ${error.message}'
-        }, "${process.env.CLIENT_URL}");
-        console.log('🚪 Closing popup window');
-        window.close();
+        console.error('Auth failed:', ${JSON.stringify(error.message)});
+        if (window.opener) {
+          window.opener.postMessage({
+            type: 'TIKTOK_AUTH_ERROR',
+            error: 'Authentication failed: ' + ${JSON.stringify(error.message)}
+          }, "${process.env.CLIENT_URL}");
+          window.close();
+        }
       </script>
     `;
     res.send(script);
