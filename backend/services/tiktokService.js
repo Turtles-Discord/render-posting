@@ -26,27 +26,42 @@ class TiktokService {
   async exchangeCodeForToken(code) {
     try {
       logger.info('Exchanging code for TikTok access token');
+      
+      // Clean the code value by removing any extra parameters
+      const cleanCode = code.split('*')[0];
+      
       const formData = new URLSearchParams();
       formData.append('client_key', this.clientKey);
       formData.append('client_secret', this.clientSecret);
-      formData.append('code', code);
+      formData.append('code', cleanCode);
       formData.append('grant_type', 'authorization_code');
       formData.append('redirect_uri', this.redirectUri);
 
+      logger.info('Token exchange request:', {
+        url: 'https://open.tiktokapis.com/v2/oauth/token/',
+        code: cleanCode,
+        redirect_uri: this.redirectUri
+      });
+
       const response = await axios.post(
         'https://open.tiktokapis.com/v2/oauth/token/', 
-        formData.toString(),
+        formData,
         {
           headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Cache-Control': 'no-cache'
           }
         }
       );
       
-      logger.info('Token data:', response.data);
+      logger.info('Token exchange response:', response.data);
       return response.data;
     } catch (error) {
-      logger.error('Token exchange error:', error.response?.data || error);
+      logger.error('Token exchange error:', {
+        message: error.message,
+        response: error.response?.data,
+        code: code
+      });
       throw error;
     }
   }

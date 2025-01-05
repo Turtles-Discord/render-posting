@@ -33,8 +33,10 @@ export const useTiktokStore = create((set) => ({
       const handleMessage = (event) => {
         console.log('Received message:', event.data);
         
+        if (!event.data || !event.data.type) return;
+        
         // Ignore TikTok SDK messages
-        if (event.data.type && event.data.type.startsWith('tea:sdk')) {
+        if (event.data.type.startsWith('tea:sdk')) {
           return;
         }
         
@@ -46,16 +48,18 @@ export const useTiktokStore = create((set) => ({
             isConnecting: false,
             accessToken: userData.access_token 
           });
-          toast.success('Connected!');
-          window.removeEventListener('message', handleMessage);
           
-          // Update local storage
+          // Store in localStorage
           localStorage.setItem('tiktokUser', JSON.stringify(userData));
+          
+          // Force a UI update
+          window.location.reload();
         } else if (type === 'TIKTOK_AUTH_ERROR') {
           set({ error: error, isConnecting: false });
-          toast.error('Connection failed');
-          window.removeEventListener('message', handleMessage);
+          toast.error(error || 'Connection failed');
         }
+        
+        window.removeEventListener('message', handleMessage);
       };
 
       // Add event listener before opening popup
