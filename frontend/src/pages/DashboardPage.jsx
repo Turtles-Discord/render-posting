@@ -18,7 +18,12 @@ const DashboardPage = () => {
 	const [videoFile, setVideoFile] = useState(null);
 	const [description, setDescription] = useState('');
 	const [isPosting, setIsPosting] = useState(false);
-	const { connectTiktok, uploadVideo, user: tiktokUser } = useTiktokStore();
+	const tiktokUser = useTiktokStore((state) => state.user);
+
+	useEffect(() => {
+		console.log('📊 Dashboard mounted');
+		console.log('👤 TikTok user state:', tiktokUser);
+	}, [tiktokUser]);
 
 	useEffect(() => {
 		fetchAccounts();
@@ -44,7 +49,8 @@ const DashboardPage = () => {
 	};
 
 	const handleTiktokConnect = () => {
-		connectTiktok();
+		console.log('🔗 TikTok connect button clicked');
+		useTiktokStore.getState().connectTiktok();
 	};
 
 	const handlePost = async () => {
