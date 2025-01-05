@@ -41,7 +41,11 @@ app.get('/api/auth/tiktok/callback', async (req, res) => {
     `;
     res.send(script);
   } catch (error) {
-    console.error('Detailed TikTok auth error:', error);
+    console.error('Detailed TikTok auth error:', {
+      error: error.message,
+      response: error.response?.data,
+      stack: error.stack
+    });
     const errorScript = `
       <script>
         if (window.opener) {
