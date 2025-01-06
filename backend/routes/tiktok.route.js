@@ -2,7 +2,6 @@ import express from 'express';
 import { verifyToken } from '../middleware/verifyToken.js';
 import tiktokService from '../services/tiktokService.js';
 import logger from '../utils/logger.js';
-import User from '../models/user.model.js';
 
 const router = express.Router();
 
@@ -24,13 +23,13 @@ router.post('/upload', verifyToken, async (req, res) => {
       throw new Error('No file provided');
     }
 
-    const user = await User.findById(req.userId);
-    if (!user || !user.tiktokToken) {
+    const tiktokToken = req.headers.authorization?.split(' ')[1];
+    if (!tiktokToken) {
       throw new Error('TikTok account not connected');
     }
 
-    console.log('Starting upload with token:', user.tiktokToken);
-    const result = await tiktokService.uploadVideo(user.tiktokToken, file, description);
+    console.log('Starting upload with token:', tiktokToken);
+    const result = await tiktokService.uploadVideo(tiktokToken, file, description);
     console.log('Upload result:', result);
     res.json(result);
   } catch (error) {
