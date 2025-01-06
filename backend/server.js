@@ -15,10 +15,13 @@ app.get('/api/auth/tiktok/callback', async (req, res) => {
       throw new Error('No authorization code received');
     }
     
+    logger.info('🔄 Exchanging code for token...');
     const tokenData = await tiktokService.exchangeCodeForToken(code);
-    logger.info('✅ Token data:', tokenData);
+    logger.info('✅ Token data received:', tokenData);
 
-    // Send a simpler response script
+    const clientUrl = process.env.CLIENT_URL;
+    logger.info('🔗 Client URL for postMessage:', clientUrl);
+
     const script = `
       <script>
         (function() {
@@ -33,11 +36,16 @@ app.get('/api/auth/tiktok/callback', async (req, res) => {
             })}
           };
           
-          console.log('📤 Sending message to opener:', message);
+          console.log('📤 Preparing to send message:', message);
+          console.log('🎯 Target origin:', "${clientUrl}");
           
           if (window.opener) {
-            window.opener.postMessage(message, "${process.env.CLIENT_URL}");
-            console.log('✅ Message sent, closing window');
+            try {
+              window.opener.postMessage(message, "${clientUrl}");
+              console.log('✅ Message sent successfully');
+            } catch (error) {
+              console.error('❌ Error sending message:', error);
+            }
             setTimeout(() => window.close(), 1000);
           } else {
             console.error('❌ No opener window found');

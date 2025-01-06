@@ -22,43 +22,79 @@ export const useTiktokStore = create((set) => ({
       const authUrl = response.data.url;
       console.log('🔗 Opening popup with URL:', authUrl);
       
+      // Parse and validate redirect_uri from authUrl
+      const urlParams = new URLSearchParams(new URL(authUrl).search);
+      const redirectUri = urlParams.get('redirect_uri');
+      console.log('🎯 Redirect URI:', redirectUri);
+      
+      // Create allowed origins array
+      const allowedOrigins = [
+        process.env.CLIENT_URL,
+        redirectUri,
+        'https://www.tiktok.com'
+      ].filter(Boolean);
+      
+      console.log('✅ Allowed origins:', allowedOrigins);
+
       const width = 600;
       const height = 800;
       const left = window.screen.width / 2 - width / 2;
       const top = window.screen.height / 2 - height / 2;
 
-      // Create a promise to handle the popup response
       const authPromise = new Promise((resolve, reject) => {
+        let popupCheckInterval;
+        
         const handleMessage = (event) => {
-          console.log('📨 Raw message received:', event);
+          console.log('📨 Message received from:', event.origin);
+          console.log('📦 Message data:', event.data);
           
-          // Verify origin
-          if (event.origin !== process.env.CLIENT_URL) {
-            console.log('⚠️ Ignoring message from unknown origin:', event.origin);
+          // Check if origin is allowed
+          if (!allowedOrigins.includes(event.origin)) {
+            console.log(`⚠️ Message from unauthorized origin: ${event.origin}`);
+            console.log('🔒 Allowed origins:', allowedOrigins);
             return;
           }
 
           if (!event.data) {
-            console.log('⚠️ No data in message');
+            console.log('⚠️ Empty message received');
             return;
           }
 
-          console.log('📨 Processing message:', event.data);
-          
           const { type, userData, error } = event.data;
+          console.log('📝 Message type:', type);
           
           if (type === 'TIKTOK_AUTH_SUCCESS' && userData) {
-            console.log('🎉 Auth successful! User data:', userData);
-            window.removeEventListener('message', handleMessage);
+            console.log('🎉 Auth successful!', userData);
+            cleanup();
             resolve(userData);
           } else if (type === 'TIKTOK_AUTH_ERROR') {
             console.error('❌ Auth error:', error);
-            window.removeEventListener('message', handleMessage);
+            cleanup();
             reject(new Error(error));
           }
         };
 
+        const cleanup = () => {
+          window.removeEventListener('message', handleMessage);
+          if (popupCheckInterval) clearInterval(popupCheckInterval);
+        };
+
         window.addEventListener('message', handleMessage);
+
+        // Check if popup is closed
+        popupCheckInterval = setInterval(() => {
+          if (popup.closed) {
+            console.log('⚠️ Popup closed by user');
+            cleanup();
+            reject(new Error('Authentication cancelled'));
+          }
+        }, 1000);
+
+        // Timeout after 5 minutes
+        setTimeout(() => {
+          cleanup();
+          reject(new Error('Authentication timed out'));
+        }, 300000);
       });
 
       const popup = window.open(
@@ -71,22 +107,16 @@ export const useTiktokStore = create((set) => ({
         throw new Error('Popup blocked! Please allow popups for this site.');
       }
 
-      // Wait for the auth promise to resolve
       const userData = await authPromise;
       
-      // Update store with user data
       set({ 
         user: userData, 
         isConnecting: false,
         accessToken: userData.access_token 
       });
       
-      // Store in localStorage
       localStorage.setItem('tiktokUser', JSON.stringify(userData));
-      
       toast.success('TikTok connected successfully!');
-      
-      // Force a UI refresh
       window.location.reload();
 
     } catch (error) {
