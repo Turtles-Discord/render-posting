@@ -27,10 +27,14 @@ export const useTiktokStore = create((set) => ({
       const redirectUri = urlParams.get('redirect_uri');
       console.log('🎯 Redirect URI:', redirectUri);
       
+      // Get base URL from redirect URI
+      const redirectOrigin = new URL(redirectUri).origin;
+      console.log('🌐 Redirect Origin:', redirectOrigin);
+      
       // Create allowed origins array
       const allowedOrigins = [
         process.env.CLIENT_URL,
-        redirectUri,
+        redirectOrigin,  // Use origin instead of full path
         'https://www.tiktok.com'
       ].filter(Boolean);
       
@@ -52,6 +56,13 @@ export const useTiktokStore = create((set) => ({
           if (!allowedOrigins.includes(event.origin)) {
             console.log(`⚠️ Message from unauthorized origin: ${event.origin}`);
             console.log('🔒 Allowed origins:', allowedOrigins);
+            console.log('🔍 Origin check:', {
+              eventOrigin: event.origin,
+              clientUrl: process.env.CLIENT_URL,
+              redirectOrigin,
+              isClientMatch: event.origin === process.env.CLIENT_URL,
+              isRedirectMatch: event.origin === redirectOrigin
+            });
             return;
           }
 

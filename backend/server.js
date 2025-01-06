@@ -36,17 +36,27 @@ app.get('/api/auth/tiktok/callback', async (req, res) => {
             })}
           };
           
+          const targetOrigin = "${clientUrl}";
           console.log('📤 Preparing to send message:', message);
-          console.log('🎯 Target origin:', "${clientUrl}");
+          console.log('🎯 Target origin:', targetOrigin);
+          console.log('🔍 Window opener:', window.opener ? 'exists' : 'missing');
           
           if (window.opener) {
             try {
-              window.opener.postMessage(message, "${clientUrl}");
+              window.opener.postMessage(message, targetOrigin);
               console.log('✅ Message sent successfully');
             } catch (error) {
               console.error('❌ Error sending message:', error);
+              console.error('Error details:', {
+                message: error.message,
+                stack: error.stack
+              });
             }
-            setTimeout(() => window.close(), 1000);
+            console.log('⏳ Waiting before closing...');
+            setTimeout(() => {
+              console.log('🚪 Closing popup window...');
+              window.close();
+            }, 1000);
           } else {
             console.error('❌ No opener window found');
           }
