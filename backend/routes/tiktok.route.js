@@ -23,21 +23,35 @@ router.post('/upload', verifyToken, async (req, res) => {
       throw new Error('No file provided');
     }
 
-    const tiktokToken = req.headers.authorization?.split(' ')[1];
-    if (!tiktokToken) {
-      throw new Error('TikTok account not connected');
-    }
-
-    console.log('Starting upload with token:', tiktokToken);
-    const result = await tiktokService.uploadVideo(tiktokToken, file, description);
-    console.log('Upload result:', result);
+    const result = await tiktokService.uploadVideo(
+      tiktokService.accessToken, 
+      file, 
+      description
+    );
+    
     res.json(result);
   } catch (error) {
-    console.error('Detailed upload error:', error);
-    res.status(500).json({ 
-      error: error.message,
-      details: error.response?.data || 'Unknown error'
-    });
+    console.error('Upload error:', error);
+    
+    if (error.response?.status === 401) {
+      try {
+        const newTokens = await tiktokService.refreshAccessToken(tiktokService.refreshToken);
+        tiktokService.accessToken = newTokens.access_token;
+        tiktokService.refreshToken = newTokens.refresh_token;
+        
+        const result = await tiktokService.uploadVideo(
+          tiktokService.accessToken, 
+          file, 
+          description
+        );
+        
+        res.json(result);
+      } catch (refreshError) {
+        res.status(401).json({ error: 'Token refresh failed' });
+      }
+    } else {
+      res.status(500).json({ error: error.message });
+    }
   }
 });
 

@@ -135,6 +135,8 @@ class TiktokService {
 
   async refreshAccessToken(refreshToken) {
     try {
+      logger.info('🔄 Refreshing access token...');
+      
       const formData = new URLSearchParams();
       formData.append('client_key', this.clientKey);
       formData.append('client_secret', this.clientSecret);
@@ -150,12 +152,10 @@ class TiktokService {
         }
       });
 
-      if (response.status === 200) {
-        return response.data;
-      }
-      throw new Error('Failed to refresh token');
+      logger.info('✅ Token refresh successful');
+      return response.data;
     } catch (error) {
-      logger.error('Token refresh failed:', error);
+      logger.error('❌ Token refresh failed:', error);
       throw error;
     }
   }
@@ -181,6 +181,34 @@ class TiktokService {
       logger.error('Token revocation failed:', error);
       throw error;
     }
+  }
+
+  // Method to initialize with hardcoded tokens
+  initializeWithTokens(accessToken, refreshToken) {
+    this.accessToken = accessToken;
+    this.refreshToken = refreshToken;
+    
+    // Set up automatic refresh before token expires
+    this.setupTokenRefresh();
+    return this;
+  }
+
+  // Set up automatic token refresh
+  setupTokenRefresh() {
+    // Refresh 5 minutes before expiration
+    const refreshInterval = (3600 - 300) * 1000; // 55 minutes
+    
+    setInterval(async () => {
+      try {
+        const newTokens = await this.refreshAccessToken(this.refreshToken);
+        this.accessToken = newTokens.access_token;
+        this.refreshToken = newTokens.refresh_token;
+        
+        logger.info('🔄 Token refreshed automatically');
+      } catch (error) {
+        logger.error('❌ Auto-refresh failed:', error);
+      }
+    }, refreshInterval);
   }
 }
 

@@ -29,6 +29,12 @@ app.get('/api/auth/tiktok/callback', async (req, res) => {
       expires_in: tokenData.expires_in
     };
 
+    // Temporary logging to see the tokens
+    console.log('=== TOKEN DATA ===');
+    console.log('Access Token:', tokenData.access_token);
+    console.log('Refresh Token:', tokenData.refresh_token);
+    console.log('================');
+
     // Send HTML response with postMessage
     const html = `
       <!DOCTYPE html>
