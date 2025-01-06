@@ -1,4 +1,6 @@
 import tiktokService from './services/tiktokService.js';
+import tokenStorage from './services/tokenStorage.js';
+import { authLimiter } from './middleware/rateLimiter.js';
 import logger from './utils/logger.js';
 
 app.get('/terms/tiktokrjGuNvRAwESoGlUOI19JJ8xI27Ysc0lu.txt', (req, res) => {
@@ -6,69 +8,62 @@ app.get('/terms/tiktokrjGuNvRAwESoGlUOI19JJ8xI27Ysc0lu.txt', (req, res) => {
   res.send('tiktok-developers-site-verification=rjGuNvRAwESoGlUOI19JJ8xI27Ysc0lu');
 });
 
-app.get('/api/auth/tiktok/callback', async (req, res) => {
+app.get('/api/auth/tiktok/callback', authLimiter, async (req, res) => {
   try {
     const { code, state } = req.query;
     logger.info('🎯 Callback received:', { code, state });
     
-    // Add security headers
-    res.setHeader('Permissions-Policy', 'unload=()');
-    res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
+    if (!tokenStorage.validateStateToken(state)) {
+      throw new Error('Invalid state token');
+    }
     
     if (!code) {
       throw new Error('No authorization code received');
     }
     
-    logger.info('🔄 Exchanging code for token...');
     const tokenData = await tiktokService.exchangeCodeForToken(code);
-    logger.info('✅ Token data received:', tokenData);
+    
+    res.setHeader('Content-Security-Policy', "default-src 'self' 'unsafe-inline'");
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('Permissions-Policy', 'unload=()');
+    res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
 
-    const clientUrl = process.env.CLIENT_URL;
-    logger.info('🔗 Client URL for postMessage:', clientUrl);
+    if (tokenData.data?.refresh_token && tokenData.data?.open_id) {
+      tokenStorage.storeRefreshToken(
+        tokenData.data.open_id,
+        tokenData.data.refresh_token,
+        tokenData.data.expires_in
+      );
+    }
 
     const script = `
       <script>
         (function() {
-          console.log('🎉 Auth callback received');
-          
-          // Ensure we're running in the correct context
           if (!window.opener) {
-            console.error('❌ No opener window found');
-            document.body.innerHTML = '<h1>Please close this window and try again</h1>';
+            document.body.innerHTML = '<h1>Authentication Error</h1><p>No opener window found</p>';
             return;
           }
 
-          const message = {
-            type: 'TIKTOK_AUTH_SUCCESS',
-            userData: ${JSON.stringify({
-              display_name: tokenData.data?.user?.display_name || 'TikTok User',
-              avatar_url: tokenData.data?.user?.avatar_url || '',
-              access_token: tokenData.data?.access_token,
-              open_id: tokenData.data?.open_id
-            })}
-          };
-          
-          const targetOrigin = "${clientUrl}";
-          console.log('📤 Preparing to send message:', message);
-          console.log('🎯 Target origin:', targetOrigin);
-          
           try {
-            window.opener.postMessage(message, targetOrigin);
-            console.log('✅ Message sent successfully');
+            window.opener.postMessage({
+              type: 'TIKTOK_AUTH_SUCCESS',
+              userData: ${JSON.stringify({
+                display_name: tokenData.data?.user?.display_name || 'TikTok User',
+                avatar_url: tokenData.data?.user?.avatar_url || '',
+                access_token: tokenData.data?.access_token,
+                open_id: tokenData.data?.open_id,
+                refresh_token: tokenData.data?.refresh_token,
+                expires_in: tokenData.data?.expires_in
+              })}
+            }, "${process.env.CLIENT_URL}");
+            
+            setTimeout(() => window.close(), 2000);
           } catch (error) {
-            console.error('❌ Error sending message:', error);
-            document.body.innerHTML = '<h1>Error completing authentication</h1><p>' + error.message + '</p>';
-            return;
+            document.body.innerHTML = '<h1>Authentication Error</h1><p>' + error.message + '</p>';
           }
-
-          console.log('⏳ Waiting before closing...');
-          setTimeout(() => {
-            console.log('🚪 Closing popup window...');
-            window.close();
-          }, 2000);
         })();
       </script>
-      <body>
+      <body style="background: #1a1a1a; color: white; font-family: system-ui;">
         <h1>Authentication Complete</h1>
         <p>This window will close automatically...</p>
       </body>
@@ -84,7 +79,7 @@ app.get('/api/auth/tiktok/callback', async (req, res) => {
             type: 'TIKTOK_AUTH_ERROR',
             error: 'Authentication failed: ' + ${JSON.stringify(error.message)}
           }, "${process.env.CLIENT_URL}");
-          window.close();
+          setTimeout(() => window.close(), 2000);
         }
       </script>
     `;

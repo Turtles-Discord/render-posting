@@ -2,6 +2,7 @@ import express from 'express';
 import { verifyToken } from '../middleware/verifyToken.js';
 import tiktokService from '../services/tiktokService.js';
 import logger from '../utils/logger.js';
+import User from '../models/user.model.js';
 
 const router = express.Router();
 

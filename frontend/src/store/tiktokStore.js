@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 const savedUser = localStorage.getItem('tiktokUser');
 const initialUser = savedUser ? JSON.parse(savedUser) : null;
 
-export const useTiktokStore = create((set) => ({
+export const useTiktokStore = create((set, get) => ({
   isConnecting: false,
   user: initialUser,
   error: null,
@@ -188,5 +188,50 @@ export const useTiktokStore = create((set) => ({
     console.log('Setting user data manually:', userData);
     set({ user: userData });
   },
-  clearUser: () => set({ user: null })
+  clearUser: () => set({ user: null }),
+
+  refreshToken: async () => {
+    try {
+      const userData = JSON.parse(localStorage.getItem('tiktokUser'));
+      if (!userData?.refresh_token) {
+        throw new Error('No refresh token available');
+      }
+
+      const response = await axios.post('/api/auth/refresh-token', {
+        refreshToken: userData.refresh_token,
+        userId: userData.open_id
+      });
+
+      const newUserData = {
+        ...userData,
+        access_token: response.data.access_token,
+        refresh_token: response.data.refresh_token,
+        expires_in: response.data.expires_in
+      };
+
+      localStorage.setItem('tiktokUser', JSON.stringify(newUserData));
+      set({ user: newUserData, accessToken: response.data.access_token });
+      
+      return response.data.access_token;
+    } catch (error) {
+      console.error('Failed to refresh token:', error);
+      set({ user: null, accessToken: null });
+      localStorage.removeItem('tiktokUser');
+      throw error;
+    }
+  },
+
+  disconnect: async () => {
+    try {
+      const { accessToken } = get();
+      if (accessToken) {
+        await axios.post('/api/auth/revoke-token', { accessToken });
+      }
+      set({ user: null, accessToken: null });
+      localStorage.removeItem('tiktokUser');
+    } catch (error) {
+      console.error('Failed to disconnect:', error);
+      throw error;
+    }
+  }
 })); 
