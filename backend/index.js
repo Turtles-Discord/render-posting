@@ -10,6 +10,7 @@ import authRoutes from "./routes/auth.route.js";
 import tiktokRoutes from './routes/tiktok.route.js';
 import tiktokRouter from './routes/tiktok.route.js';
 import { TIKTOK_TOKENS } from './config/tokens.js';
+import tiktokService from './services/tiktokService.js';
 
 dotenv.config();
 
@@ -32,10 +33,12 @@ app.use('/api/tiktok', tiktokRoutes);
 app.use('/api/auth/tiktok', tiktokRouter);
 
 // Initialize TikTok service with tokens
-tiktokService.initializeWithTokens(
-	TIKTOK_TOKENS.ACCESS_TOKEN,
-	TIKTOK_TOKENS.REFRESH_TOKEN
-);
+if (TIKTOK_TOKENS.ACCESS_TOKEN && TIKTOK_TOKENS.REFRESH_TOKEN) {
+	tiktokService.initializeWithTokens(
+		TIKTOK_TOKENS.ACCESS_TOKEN,
+		TIKTOK_TOKENS.REFRESH_TOKEN
+	);
+}
 
 if (process.env.NODE_ENV === "production") {
 	app.use(express.static(path.join(__dirname, "/frontend/dist")));
