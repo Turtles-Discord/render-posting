@@ -11,30 +11,19 @@ app.get('/terms/tiktokrjGuNvRAwESoGlUOI19JJ8xI27Ysc0lu.txt', (req, res) => {
 app.get('/api/auth/tiktok/callback', authLimiter, async (req, res) => {
   try {
     const { code, state } = req.query;
-    logger.info('🎯 Callback received:', { code, state });
-    
-    if (!tokenStorage.validateStateToken(state)) {
-      throw new Error('Invalid state token');
-    }
+    logger.info('🎯 Callback received:', { code });
     
     if (!code) {
       throw new Error('No authorization code received');
     }
     
     const tokenData = await tiktokService.exchangeCodeForToken(code);
-    
+    logger.info('✅ Token exchange successful');
+
+    // Set secure headers
     res.setHeader('Content-Security-Policy', "default-src 'self' 'unsafe-inline'");
     res.setHeader('X-Frame-Options', 'DENY');
-    res.setHeader('Permissions-Policy', 'unload=()');
     res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
-
-    if (tokenData.data?.refresh_token && tokenData.data?.open_id) {
-      tokenStorage.storeRefreshToken(
-        tokenData.data.open_id,
-        tokenData.data.refresh_token,
-        tokenData.data.expires_in
-      );
-    }
 
     const script = `
       <script>
@@ -45,21 +34,30 @@ app.get('/api/auth/tiktok/callback', authLimiter, async (req, res) => {
           }
 
           try {
+            const userData = {
+              display_name: ${JSON.stringify(tokenData.user.display_name || 'TikTok User')},
+              avatar_url: ${JSON.stringify(tokenData.user.avatar_url || '')},
+              access_token: ${JSON.stringify(tokenData.access_token)},
+              open_id: ${JSON.stringify(tokenData.open_id)},
+              refresh_token: ${JSON.stringify(tokenData.refresh_token)},
+              expires_in: ${JSON.stringify(tokenData.expires_in)}
+            };
+
             window.opener.postMessage({
               type: 'TIKTOK_AUTH_SUCCESS',
-              userData: ${JSON.stringify({
-                display_name: tokenData.data?.user?.display_name || 'TikTok User',
-                avatar_url: tokenData.data?.user?.avatar_url || '',
-                access_token: tokenData.data?.access_token,
-                open_id: tokenData.data?.open_id,
-                refresh_token: tokenData.data?.refresh_token,
-                expires_in: tokenData.data?.expires_in
-              })}
+              userData: userData
             }, "${process.env.CLIENT_URL}");
             
-            setTimeout(() => window.close(), 2000);
+            // Store in localStorage
+            window.opener.localStorage.setItem('tiktokUser', JSON.stringify(userData));
+            
+            setTimeout(() => window.close(), 1000);
           } catch (error) {
-            document.body.innerHTML = '<h1>Authentication Error</h1><p>' + error.message + '</p>';
+            console.error('Auth error:', error);
+            window.opener.postMessage({
+              type: 'TIKTOK_AUTH_ERROR',
+              error: error.message
+            }, "${process.env.CLIENT_URL}");
           }
         })();
       </script>
@@ -71,19 +69,17 @@ app.get('/api/auth/tiktok/callback', authLimiter, async (req, res) => {
     res.send(script);
   } catch (error) {
     logger.error('❌ Auth error:', error);
-    const script = `
+    res.send(`
       <script>
-        console.error('Auth failed:', ${JSON.stringify(error.message)});
         if (window.opener) {
           window.opener.postMessage({
             type: 'TIKTOK_AUTH_ERROR',
             error: 'Authentication failed: ' + ${JSON.stringify(error.message)}
           }, "${process.env.CLIENT_URL}");
-          setTimeout(() => window.close(), 2000);
+          setTimeout(() => window.close(), 1000);
         }
       </script>
-    `;
-    res.send(script);
+    `);
   }
 });
 

@@ -52,65 +52,83 @@ class TiktokService {
       formData.append('redirect_uri', this.redirectUri);
 
       logger.info('📤 Token exchange request:', {
-        code: cleanCode,
         redirect_uri: this.redirectUri
       });
 
       const response = await axios({
         method: 'POST',
-        url: 'https://open.tiktokapis.com/v2/oauth/token/',
+        url: `${this.apiUrl}/oauth/token/`,
         data: formData,
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
           'Cache-Control': 'no-cache'
-        },
-        validateStatus: false // Don't throw on non-2xx responses
-      });
-      
-      logger.info('📥 Token exchange response:', {
-        status: response.status,
-        data: response.data
+        }
       });
 
-      if (response.status !== 200) {
-        throw new Error(`Token exchange failed: ${JSON.stringify(response.data)}`);
-      }
+      // Get user info with the access token
+      const userResponse = await axios({
+        method: 'GET',
+        url: `${this.apiUrl}/user/info/`,
+        headers: {
+          'Authorization': `Bearer ${response.data.access_token}`
+        }
+      });
 
-      return response.data;
+      return {
+        ...response.data,
+        user: userResponse.data.data
+      };
     } catch (error) {
-      logger.error('❌ Token exchange error:', {
-        message: error.message,
-        response: error.response?.data,
-        code: code
-      });
+      logger.error('❌ Token exchange error:', error);
       throw error;
     }
   }
 
   async uploadVideo(accessToken, videoFile, description) {
     try {
-      logger.info('Starting video upload to TikTok');
-      const response = await axios.post(
-        `${this.apiUrl}video/upload/`,
+      // First, initiate upload
+      const initResponse = await axios.post(
+        `${this.apiUrl}/video/init/`,
+        { source_info: { source: 'FILE_UPLOAD' } },
         {
-          video: videoFile,
-          description
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      // Upload the video chunks
+      const uploadResponse = await axios.post(
+        initResponse.data.upload_url,
+        videoFile,
+        {
+          headers: {
+            'Content-Type': 'video/mp4',
+            'Authorization': `Bearer ${accessToken}`
+          }
+        }
+      );
+
+      // Complete the upload
+      const publishResponse = await axios.post(
+        `${this.apiUrl}/video/publish/`,
+        {
+          upload_id: initResponse.data.upload_id,
+          description: description,
+          privacy_level: 'PUBLIC'
         },
         {
           headers: {
             'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'multipart/form-data'
+            'Content-Type': 'application/json'
           }
         }
       );
-      
-      logger.info('Successfully uploaded video to TikTok');
-      return response.data;
+
+      return publishResponse.data;
     } catch (error) {
-      logger.error('Error uploading video to TikTok:', {
-        error: error.response?.data || error.message,
-        description
-      });
+      logger.error('Error uploading video:', error);
       throw error;
     }
   }
