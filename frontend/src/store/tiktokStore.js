@@ -16,7 +16,7 @@ export const useTiktokStore = create((set, get) => ({
       set({ isConnecting: true, error: null });
       
       console.log('📡 Fetching auth URL from server...');
-      const response = await axios.get('/api/tiktok/auth-url');
+      const response = await axios.get('/api/auth/tiktok/auth-url');
       console.log('✅ Auth URL received:', response.data);
       
       const authUrl = response.data.url;
