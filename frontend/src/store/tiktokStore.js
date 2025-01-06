@@ -19,75 +19,75 @@ export const useTiktokStore = create((set) => ({
       const response = await axios.get('/api/tiktok/auth-url');
       console.log('✅ Auth URL received:', response.data);
       
-      if (!response.data.url) {
-        throw new Error('Invalid auth URL response');
-      }
-      
       const authUrl = response.data.url;
       console.log('🔗 Opening popup with URL:', authUrl);
       
       const width = 600;
-      const height = 600;
+      const height = 800;
       const left = window.screen.width / 2 - width / 2;
       const top = window.screen.height / 2 - height / 2;
 
-      // Define handleMessage before using it
-      const handleMessage = (event) => {
-        console.log('📨 Received message from popup:', event.data);
-        
-        if (!event.data || !event.data.type) {
-          console.log('⚠️ Ignoring message - no type found');
-          return;
-        }
-        
-        // Ignore TikTok SDK messages
-        if (event.data.type.startsWith('tea:sdk')) {
-          console.log('⚠️ Ignoring TikTok SDK message');
-          return;
-        }
-        
-        const { type, userData, error } = event.data;
-        if (type === 'TIKTOK_AUTH_SUCCESS' && userData) {
-          console.log('🎉 Auth successful! User data:', userData);
-          set({ 
-            user: userData, 
-            isConnecting: false,
-            accessToken: userData.access_token 
-          });
+      // Create a promise to handle the popup response
+      const authPromise = new Promise((resolve, reject) => {
+        const handleMessage = (event) => {
+          console.log('📨 Raw message received:', event);
           
-          // Store in localStorage
-          console.log('💾 Storing user data in localStorage');
-          localStorage.setItem('tiktokUser', JSON.stringify(userData));
-          
-          toast.success('TikTok connected successfully!');
-          console.log('🔄 Refreshing page to update UI');
-          window.location.reload();
-        } else if (type === 'TIKTOK_AUTH_ERROR') {
-          console.error('❌ Auth error:', error);
-          set({ error: error, isConnecting: false });
-          toast.error(error || 'Connection failed');
-        }
-        
-        console.log('🧹 Cleaning up event listener');
-        window.removeEventListener('message', handleMessage);
-      };
+          // Verify origin
+          if (event.origin !== process.env.CLIENT_URL) {
+            console.log('⚠️ Ignoring message from unknown origin:', event.origin);
+            return;
+          }
 
-      // Add event listener before opening popup
-      console.log('👂 Adding message event listener');
-      window.addEventListener('message', handleMessage);
-      
+          if (!event.data) {
+            console.log('⚠️ No data in message');
+            return;
+          }
+
+          console.log('📨 Processing message:', event.data);
+          
+          const { type, userData, error } = event.data;
+          
+          if (type === 'TIKTOK_AUTH_SUCCESS' && userData) {
+            console.log('🎉 Auth successful! User data:', userData);
+            window.removeEventListener('message', handleMessage);
+            resolve(userData);
+          } else if (type === 'TIKTOK_AUTH_ERROR') {
+            console.error('❌ Auth error:', error);
+            window.removeEventListener('message', handleMessage);
+            reject(new Error(error));
+          }
+        };
+
+        window.addEventListener('message', handleMessage);
+      });
+
       const popup = window.open(
         authUrl,
         'TikTok Login',
-        `toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=no, resizable=no, copyhistory=no, width=${width}, height=${height}, top=${top}, left=${left}`
+        `toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=yes, resizable=no, copyhistory=no, width=${width}, height=${height}, top=${top}, left=${left}`
       );
 
       if (!popup) {
-        console.error('❌ Popup was blocked!');
         throw new Error('Popup blocked! Please allow popups for this site.');
       }
+
+      // Wait for the auth promise to resolve
+      const userData = await authPromise;
       
-      console.log('✅ Popup opened successfully');
+      // Update store with user data
+      set({ 
+        user: userData, 
+        isConnecting: false,
+        accessToken: userData.access_token 
+      });
+      
+      // Store in localStorage
+      localStorage.setItem('tiktokUser', JSON.stringify(userData));
+      
+      toast.success('TikTok connected successfully!');
+      
+      // Force a UI refresh
+      window.location.reload();
 
     } catch (error) {
       console.error('❌ Connection error:', error);

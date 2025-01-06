@@ -21,9 +21,9 @@ app.get('/api/auth/tiktok/callback', async (req, res) => {
     // Send a simpler response script
     const script = `
       <script>
-        console.log('🎉 Auth successful, sending message to opener');
-        if (window.opener) {
-          window.opener.postMessage({
+        (function() {
+          console.log('🎉 Auth callback received');
+          const message = {
             type: 'TIKTOK_AUTH_SUCCESS',
             userData: ${JSON.stringify({
               display_name: tokenData.data?.user?.display_name || 'TikTok User',
@@ -31,11 +31,18 @@ app.get('/api/auth/tiktok/callback', async (req, res) => {
               access_token: tokenData.data?.access_token,
               open_id: tokenData.data?.open_id
             })}
-          }, "${process.env.CLIENT_URL}");
-          window.close();
-        } else {
-          console.error('No opener window found');
-        }
+          };
+          
+          console.log('📤 Sending message to opener:', message);
+          
+          if (window.opener) {
+            window.opener.postMessage(message, "${process.env.CLIENT_URL}");
+            console.log('✅ Message sent, closing window');
+            setTimeout(() => window.close(), 1000);
+          } else {
+            console.error('❌ No opener window found');
+          }
+        })();
       </script>
     `;
     res.send(script);
