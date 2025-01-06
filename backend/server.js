@@ -11,6 +11,10 @@ app.get('/api/auth/tiktok/callback', async (req, res) => {
     const { code, state } = req.query;
     logger.info('🎯 Callback received:', { code, state });
     
+    // Add security headers
+    res.setHeader('Permissions-Policy', 'unload=()');
+    res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
+    
     if (!code) {
       throw new Error('No authorization code received');
     }
@@ -26,6 +30,14 @@ app.get('/api/auth/tiktok/callback', async (req, res) => {
       <script>
         (function() {
           console.log('🎉 Auth callback received');
+          
+          // Ensure we're running in the correct context
+          if (!window.opener) {
+            console.error('❌ No opener window found');
+            document.body.innerHTML = '<h1>Please close this window and try again</h1>';
+            return;
+          }
+
           const message = {
             type: 'TIKTOK_AUTH_SUCCESS',
             userData: ${JSON.stringify({
@@ -39,29 +51,27 @@ app.get('/api/auth/tiktok/callback', async (req, res) => {
           const targetOrigin = "${clientUrl}";
           console.log('📤 Preparing to send message:', message);
           console.log('🎯 Target origin:', targetOrigin);
-          console.log('🔍 Window opener:', window.opener ? 'exists' : 'missing');
           
-          if (window.opener) {
-            try {
-              window.opener.postMessage(message, targetOrigin);
-              console.log('✅ Message sent successfully');
-            } catch (error) {
-              console.error('❌ Error sending message:', error);
-              console.error('Error details:', {
-                message: error.message,
-                stack: error.stack
-              });
-            }
-            console.log('⏳ Waiting before closing...');
-            setTimeout(() => {
-              console.log('🚪 Closing popup window...');
-              window.close();
-            }, 1000);
-          } else {
-            console.error('❌ No opener window found');
+          try {
+            window.opener.postMessage(message, targetOrigin);
+            console.log('✅ Message sent successfully');
+          } catch (error) {
+            console.error('❌ Error sending message:', error);
+            document.body.innerHTML = '<h1>Error completing authentication</h1><p>' + error.message + '</p>';
+            return;
           }
+
+          console.log('⏳ Waiting before closing...');
+          setTimeout(() => {
+            console.log('🚪 Closing popup window...');
+            window.close();
+          }, 2000);
         })();
       </script>
+      <body>
+        <h1>Authentication Complete</h1>
+        <p>This window will close automatically...</p>
+      </body>
     `;
     res.send(script);
   } catch (error) {

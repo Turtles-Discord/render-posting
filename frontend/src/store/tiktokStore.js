@@ -52,6 +52,14 @@ export const useTiktokStore = create((set) => ({
           console.log('📨 Message received from:', event.origin);
           console.log('📦 Message data:', event.data);
           
+          // Handle TikTok SDK messages
+          if (event.origin === 'https://www.tiktok.com') {
+            if (event.data?.type === 'tea:sdk:info' || event.data === '[tea-sdk]ready') {
+              console.log('ℹ️ TikTok SDK message received:', event.data);
+              return; // Don't reject these messages
+            }
+          }
+
           // Check if origin is allowed
           if (!allowedOrigins.includes(event.origin)) {
             console.log(`⚠️ Message from unauthorized origin: ${event.origin}`);
@@ -111,11 +119,30 @@ export const useTiktokStore = create((set) => ({
       const popup = window.open(
         authUrl,
         'TikTok Login',
-        `toolbar=no, location=no, directories=no, status=no, menubar=no, scrollbars=yes, resizable=no, copyhistory=no, width=${width}, height=${height}, top=${top}, left=${left}`
+        `
+          toolbar=no,
+          location=no,
+          directories=no,
+          status=no,
+          menubar=no,
+          scrollbars=yes,
+          resizable=yes,
+          width=${width},
+          height=${height},
+          top=${top},
+          left=${left},
+          crossorigin=use-credentials
+        `.replace(/\s+/g, '')
       );
 
-      if (!popup) {
-        throw new Error('Popup blocked! Please allow popups for this site.');
+      // Add popup focus
+      if (popup) {
+        popup.focus();
+      }
+
+      // Add popup check immediately
+      if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+        throw new Error('Popup blocked or closed. Please enable popups for this site.');
       }
 
       const userData = await authPromise;
